@@ -6,3 +6,137 @@ output: github_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+```{r}
+library(stats)
+library(readxl)
+library(tidyverse)
+library(ggplot2)
+library(tidymodels)
+library(tidyverse)
+library(GGally)
+
+```
+**Load the data**
+__Uploaded the data in csv format__
+
+```{r load_Data}
+#load data
+df_2019 <- read.csv("k12_2019.csv")
+df_2016 <- read.csv("k12_2016.csv")
+head(df_2019, 5)
+```
+**Start exploring the data**
+
+```{r}
+columns = names(df_2019)
+columns
+```
+
+```{r visualize_data}
+# Subset the columns of interest from df_2019
+columns_of_interest <- df_2019[, c("SEGRADES", "CHLDNT", "RACEETH", "P1SEX", "PARGRADEX", "DSBLTY", "TTLHHINC", "EINTNET")]
+
+# Create line graphs for each variable against SEGRADES
+line_chldnt <- ggplot(columns_of_interest, aes(x = CHLDNT, y = SEGRADES)) +
+  geom_line() +
+  labs(x = "CHLDNT", y = "SEGRADES") +
+  ggtitle("Relationship between CHLDNT and SEGRADES")
+
+line_raceeth <- ggplot(columns_of_interest, aes(x = RACEETH, y = SEGRADES)) +
+  geom_line() +
+  labs(x = "RACEETH", y = "SEGRADES") +
+  ggtitle("Relationship between RACEETH and SEGRADES")
+
+line_p1sex <- ggplot(columns_of_interest, aes(x = P1SEX, y = SEGRADES)) +
+  geom_line() +
+  labs(x = "P1SEX", y = "SEGRADES") +
+  ggtitle("Relationship between P1SEX and SEGRADES")
+
+line_pargradex <- ggplot(columns_of_interest, aes(x = PARGRADEX, y = SEGRADES)) +
+  geom_line() +
+  labs(x = "PARGRADEX", y = "SEGRADES") +
+  ggtitle("Relationship between PARGRADEX and SEGRADES")
+
+line_dsblty <- ggplot(columns_of_interest, aes(x = DSBLTY, y = SEGRADES)) +
+  geom_line() +
+  labs(x = "DSBLTY", y = "SEGRADES") +
+  ggtitle("Relationship between DSBLTY and SEGRADES")
+
+line_ttlhhinc <- ggplot(columns_of_interest, aes(x = TTLHHINC, y = SEGRADES)) +
+  geom_line() +
+  labs(x = "TTLHHINC", y = "SEGRADES") +
+  ggtitle("Relationship between TTLHHINC and SEGRADES")
+
+# Display the line graphs for each variable against the dependent
+#line_chldnt
+#line_raceeth
+#line_p1sex
+#line_pargradex
+#line_dsblty
+line_ttlhhinc
+
+
+
+```
+
+```{r simple_model}
+#write the multiple linear regression model
+#the dependent variable in this case: SEGRADES
+#Using simple ML mol
+model <- lm(SEGRADES ~ CHLDNT + RACEETH + P1SEX + PARGRADEX + DSBLTY + TTLHHINC, data = columns_of_interest)
+
+# Print the summary of the linear regression model
+summary(model)
+
+```
+```{r}
+data <- columns_of_interest
+# review any visual patterns
+  data %>% 
+    select(SEGRADES, CHLDNT, RACEETH, P1SEX, PARGRADEX, DSBLTY, TTLHHINC,EINTNET) %>% 
+    ggpairs()
+
+  #fit the mlr model
+  lm_spec <- linear_reg() %>%
+  set_mode("regression") %>%
+  set_engine("lm")
+
+  mlr_mod <- lm_spec %>% 
+  fit(SEGRADES ~ CHLDNT + RACEETH + P1SEX + PARGRADEX + DSBLTY + TTLHHINC + EINTNET, data = data)
+
+  tidy(mlr_mod)
+```
+
+**Brief analysis from the ggpairs() above**
+1. There was no correlation between the predictors, meaning they can be used within the model in determining the students performance (grades during a school year). 
+2. CHLDNT (internet usage by a child in learning activities), DSBLTY (Child with disability) and P1SEX (gender of parent at home) p-values do not show any significance in predicting the child performance from virtual learning. 
+3. EINTNET, TTLHHINC, PARGRADEX and RACEETH were therefore suitable in predicting the students who most benefited from virtual learning. 
+
+4. Most students were white non-hispanic, then hispanic, black non-hispanic, and asian.
+5.Higher education of parents or gardiuns (Vocational/technical education after high school or some college, College graduate, Graduate or professional school) benefited more.
+6. Children from families with high total household income ($75,001 to $100,000, $100,001 to $150,000, $150,001 to $200,000) benefited more.
+
+7. Majority of the students who benefited did not have online classes. This means, most of the successful child's parents prefered child interaction with teachers. 
+
+
+```{r relationship_among_vars}
+#selected model
+data %>% 
+    select(SEGRADES, RACEETH, PARGRADEX, TTLHHINC,EINTNET) %>% 
+    ggpairs()
+
+  #fit the mlr model
+  lm_spec_1 <- linear_reg() %>%
+  set_mode("regression") %>%
+  set_engine("lm")
+
+  mlr_mod1 <- lm_spec_1 %>% 
+  fit(SEGRADES ~ RACEETH + PARGRADEX + TTLHHINC + EINTNET, data = data)
+
+  tidy(mlr_mod1)
+
+```
+
+
+
+
